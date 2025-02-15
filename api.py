@@ -5,9 +5,10 @@ from datetime import datetime
 
 app = FastAPI()
 
-# WooCommerce API-sleutels
+# ✅ Zet hier je WooCommerce API-sleutels neer
 consumer_key = "ck_a71a6e6549401c7cdc4d5b09ed140873d0fe9557"
 consumer_secret = "cs_d22fd4b4ffecf9aa68ec074567bec900a8cb5452"
+
 base_url = "https://www.kuurne-brussel-kuurne.be/wp-json/wc-analytics/reports/products"
 
 @app.get("/")
@@ -23,8 +24,8 @@ def get_total_sales():
 
     url = f"{base_url}?date_min={start_date}&date_max={end_date}"
 
-    # Basic Authentication
-    credentials = f"{ck_a71a6e6549401c7cdc4d5b09ed140873d0fe9557}:{cs_d22fd4b4ffecf9aa68ec074567bec900a8cb5452}"
+    # ✅ Zet de credentials correct in de Base64-authenticatie
+    credentials = f"{consumer_key}:{consumer_secret}"
     encoded_credentials = base64.b64encode(credentials.encode()).decode()
 
     headers = {
@@ -32,21 +33,24 @@ def get_total_sales():
         "Content-Type": "application/json"
     }
 
-    response = requests.get(url, headers=headers)
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Controleer of de API-aanroep succesvol was
 
-    if response.status_code == 200:
         products = response.json()
 
         total_revenue = 0
         total_items_sold = 0
 
         for product in products:
-            total_revenue += product["net_revenue"]
-            total_items_sold += product["items_sold"]
+            total_revenue += product.get("net_revenue", 0)
+            total_items_sold += product.get("items_sold", 0)
 
         return {
             "total_revenue": total_revenue,
             "total_items_sold": total_items_sold
         }
 
-    return {"error": response.status_code, "message": response.text}
+    except requests.exceptions.RequestException as e:
+        return {"error": "API call failed", "details": str(e)}
+
