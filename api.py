@@ -1,4 +1,12 @@
 from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"message": "API is running!"}
+
+from fastapi import FastAPI
 import requests
 from requests.auth import HTTPBasicAuth
 
